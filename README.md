@@ -108,7 +108,7 @@ Download the following files and place them in the `Formal/` directory:
 - `Data.npy` - AlexNet feature data
 - `mean.npy`, `std.npy` - Normalization parameters
 
-**⚠️ Important:** Extract the contents from the Release package and place them in the directory according to the File Structure format (see below) before running the code.
+**⚠️ Important:** Extract the contents from the https://cloud.tsinghua.edu.cn/d/8f10b98a3bcc4e31b12d/ and place them in the directory according to the File Structure format (see below) before running the code.
 
 ---
 
@@ -234,3 +234,4 @@ Formal/
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details
+
