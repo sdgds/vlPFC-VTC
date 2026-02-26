@@ -1,137 +1,139 @@
 # Hierarchical Feedback Model for Occluded Face Processing
 
-基于VTC-vlPFC层级反馈机制的遮挡面孔识别计算模型
+A computational model for occluded face recognition based on VTC-vlPFC hierarchical feedback mechanism
 
 ---
 
-## 概述
+## Overview
 
-本模型实现了腹侧颞叶皮层(VTC)和腹外侧前额叶皮层(vlPFC)之间的层级反馈交互，用于处理遮挡面孔。模型结合了：
-- **自组织映射(SOM)** - 实现拓扑组织
-- **随机Hopfield网络** - 实现吸引子动力学
-- **自顶向下反馈** - vlPFC对VTC的调制作用
+This model implements hierarchical feedback interactions between ventral temporal cortex (VTC) and ventrolateral prefrontal cortex (vlPFC) for processing occluded faces. The model combines:
+- **Self-Organizing Maps (SOM)** - Implementing topographic organization
+- **Stochastic Hopfield Networks** - Implementing attractor dynamics
+- **Top-down Feedback** - vlPFC modulation of VTC
 
-模型在5种遮挡条件下得到验证：完整面孔、遮挡眼睛、上半部、下半部、仅眼睛。
+The model is validated under 5 occlusion conditions: intact faces, eyes-occluded, upper-half, lower-half, and eyes-only.
 
 ---
 
-## 核心算法流程
+## Core Algorithm Pipeline
 
-### 1. 输入处理
+### 1. Input Processing
 ```
-原始图像(224×224)
+Raw Image (224×224)
   → AlexNet
-  → PCA降维(4维)
-  → 归一化
+  → PCA Dimensionality Reduction (4D)
+  → Normalization
 ```
 
-### 2. VTC自组织映射
+### 2. VTC Self-Organizing Map
 ```python
-# VTC SOM (200×200神经元)
-输入向量(4维) → SOM激活 → 拓扑响应图(200×200)
+# VTC SOM (200×200 neurons)
+Input Vector (4D) → SOM Activation → Topographic Response Map (200×200)
 ```
-- 使用高斯邻域函数
-- 权重归一化
-- 前向激活：activation = dot(weights, input)
+- Using Gaussian neighborhood function
+- Weight normalization
+- Forward activation: activation = dot(weights, input)
 
-### 3. Hopfield网络动力学
+### 3. Hopfield Network Dynamics
 
-#### 模式A: 仅循环模式(Recurrent-only)
+#### Mode A: Recurrent-only Mode
 ```
-VTC初始状态 → VTC循环动力学 → VTC稳定状态
-```
-
-#### 模式B: 反馈模式(Feedback)
-```
-VTC初始状态
-  ↓
-VTC循环动力学
-  ↓
-vlPFC激活(从VTC压缩表征)
-  ↓
-vlPFC循环动力学
-  ↓
-vlPFC→VTC反馈投射
-  ↓
-VTC在反馈调制下继续演化
-  ↓
-VTC稳定状态
+VTC Initial State → VTC Recurrent Dynamics → VTC Stable State
 ```
 
-### 4. 随机更新规则
+#### Mode B: Feedback Mode
+```
+VTC Initial State
+  ↓
+VTC Recurrent Dynamics
+  ↓
+vlPFC Activation (from VTC compressed representation)
+  ↓
+vlPFC Recurrent Dynamics
+  ↓
+vlPFC→VTC Feedback Projection
+  ↓
+VTC Continues Evolution under Feedback Modulation
+  ↓
+VTC Stable State
+```
+
+### 4. Stochastic Update Rule
 ```python
-# 对于每个神经元i
+# For each neuron i
 local_field = Σ(w_ij * s_j) + H_external
 ```
-- `H_external`: 外部场(自底向上输入 + 自顶向下反馈)
-- 异步更新：每次随机选择一个神经元更新
+- `H_external`: External field (bottom-up input + top-down feedback)
+- Asynchronous update: randomly select one neuron to update at each step
 
-### 5. 能量函数
+### 5. Energy Function
 ```
 E = -0.5 * Σ(w_ij * s_i * s_j)
 ```
-- 网络趋向于最小化能量
-- 稳定状态对应能量极小值(吸引子)
+- Network tends to minimize energy
+- Stable states correspond to energy minima (attractors)
 
 ---
 
-## 系统要求
+## System Requirements
 
 - **Python**: 3.8+
-- **内存**: 16 GB最低，32 GB推荐
-- **存储**: 20 GB
-- **GPU**: 可选(仅用于AlexNet特征提取)
+- **Memory**: 16 GB minimum, 32 GB recommended
+- **Storage**: 20 GB
+- **GPU**: Optional (only for AlexNet feature extraction)
 
 ---
 
-## 安装
+## Installation
 
-### 1. 创建环境
+### 1. Create Environment
 ```bash
 conda create -n occluded_face python=3.8
 conda activate occluded_face
 ```
 
-### 2. 安装依赖
+### 2. Install Dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-### 3. 下载预训练权重
-需要下载以下文件并放在`Formal/`目录：
-- `som_sigma_6.2.npy` - VTC SOM权重(200×200×4)
-- `model_VTC_weights.npy` - VTC Hopfield权重(40000×40000, ~12GB)
-- `som_vlPFC_weights.npy` - vlPFC SOM权重(20×20×40000)
-- `model_vlPFC_weights.npy` - vlPFC Hopfield权重(400×400)
-- `face_mask.npy` - 面孔选择性区域掩码
-- `object_mask.npy` - 物体选择性区域掩码
-- `Data.npy` - AlexNet特征数据
-- `mean.npy`, `std.npy` - 归一化参数
+### 3. Download Pre-trained Weights
+Download the following files and place them in the `Formal/` directory:
+- `som_sigma_6.2.npy` - VTC SOM weights (200×200×4)
+- `model_VTC_weights.npy` - VTC Hopfield weights (40000×40000, ~12GB)
+- `som_vlPFC_weights.npy` - vlPFC SOM weights (20×20×40000)
+- `model_vlPFC_weights.npy` - vlPFC Hopfield weights (400×400)
+- `face_mask.npy` - Face-selective region mask
+- `object_mask.npy` - Object-selective region mask
+- `Data.npy` - AlexNet feature data
+- `mean.npy`, `std.npy` - Normalization parameters
+
+**⚠️ Important:** Extract the contents from the Release package and place them in the directory according to the File Structure format (see below) before running the code.
 
 ---
 
-## 使用方法
+## Usage
 
-### 快速开始
+### Quick Start
 
-#### 1. 加载模型
+#### 1. Load Models
 ```python
 import numpy as np
 import BrainSOM
 import Hopfield_VTCSOM
 
-# 加载VTC SOM
+# Load VTC SOM
 som_VTC = BrainSOM.VTCSOM(200, 200, 4, sigma=6.2, learning_rate=1)
 som_VTC._weights = np.load('som_sigma_6.2.npy')
 
-# 加载VTC Hopfield网络
+# Load VTC Hopfield Network
 model_VTC = Hopfield_VTCSOM.Stochastic_Hopfield_nn(
     x=200, y=200, pflag=1, nflag=-1,
     patterns=[None, None, None, None]
 )
 model_VTC._w = np.load('model_VTC_weights.npy')
 
-# 加载vlPFC模型(反馈模式需要)
+# Load vlPFC Models (required for feedback mode)
 som_vlPFC = BrainSOM.VTCSOM(20, 20, 40000, sigma=6, learning_rate=1)
 som_vlPFC._weights = np.load('som_vlPFC_weights.npy')
 
@@ -142,93 +144,93 @@ model_vlPFC = Hopfield_VTCSOM.Stochastic_Hopfield_nn(
 model_vlPFC._w = np.load('model_vlPFC_weights.npy')
 ```
 
-#### 2. 运行反馈模式
-参见`Occluded_face_formal.ipynb`中的完整实现。
+#### 2. Run Feedback Mode
+See complete implementation in `Occluded_face_formal.ipynb`.
 
-### 主要Notebook文件
+### Main Notebook Files
 
-1. **Stimuli_formal.ipynb** - 刺激准备
-   - AlexNet特征提取
-   - GradCAM注意力分析
-   - 特征归一化
+1. **Stimuli_formal.ipynb** - Stimulus Preparation
+   - AlexNet feature extraction
+   - GradCAM attention analysis
+   - Feature normalization
 
-2. **Occluded_face_formal.ipynb** - 模型仿真
-   - VTC-vlPFC层级动力学
-   - 5种遮挡条件仿真
-   - 结果保存到`model_results/`
+2. **Occluded_face_formal.ipynb** - Model Simulation
+   - VTC-vlPFC hierarchical dynamics
+   - Simulation of 5 occlusion conditions
+   - Results saved to `model_results/`
 
-3. **Model_results_formal.ipynb** - 结果分析
-   - 时间动力学可视化
-   - 能量景观分析(UMAP)
-   - 解码分析
-   - 流形几何度量
-
----
-
-## 关键参数说明
-
-### SOM参数
-- `sigma`: 邻域宽度
-- `learning_rate`: 学习率(通常为1.0)
-- `neighborhood_function`: 邻域函数类型('gaussian')
-
-### Hopfield参数
-- `beta`: 逆温度，控制随机性
-  - 高值(100-200): 更确定性，快速收敛
-  - 低值(10-50): 更随机，探索更多状态
-- `epochs`: 更新步数
-  - 仅循环: 80,000步
-  - 反馈: 80,000步(vlPFC从50,000步开始)
-- `save_inter_step`: 保存间隔(1000步)
-
-### 反馈参数
-- `top_down_strength`: 反馈强度(默认: 4)
-- `vlPFC_start_time`: vlPFC开始时间(默认: 50,000)
+3. **Model_results_formal.ipynb** - Results Analysis
+   - Temporal dynamics visualization
+   - Energy landscape analysis (UMAP)
+   - Decoding analysis
+   - Manifold geometry metrics
 
 ---
 
-## 输出结果
+## Key Parameters
 
-### 1. 动态状态轨迹
-- `Dynamic_states_VTC`: VTC随时间的活动(20图像 × 81时间点 × 200 × 200)
-- `Dynamic_states_vlPFC`: vlPFC随时间的活动(20图像 × 31时间点 × 20 × 20)
+### SOM Parameters
+- `sigma`: Neighborhood width
+- `learning_rate`: Learning rate (typically 1.0)
+- `neighborhood_function`: Neighborhood function type ('gaussian')
 
-### 2. 能量景观
-- UMAP降维的网络状态
-- 能量曲面可视化
-- 吸引子盆分析
+### Hopfield Parameters
+- `beta`: Inverse temperature, controls stochasticity
+  - High values (100-200): More deterministic, fast convergence
+  - Low values (10-50): More stochastic, explores more states
+- `epochs`: Number of update steps
+  - Recurrent-only: 80,000 steps
+  - Feedback: 80,000 steps (vlPFC starts at 50,000)
+- `save_inter_step`: Save interval (1000 steps)
 
-### 3. 性能指标
-- **解码准确率**: 面孔vs工具分类(5条件 × 20样本)
-- **流形维度**: 内在维度估计
-- **流形半径**: 表征的几何扩展
+### Feedback Parameters
+- `top_down_strength`: Feedback strength (default: 4)
+- `vlPFC_start_time`: vlPFC start time (default: 50,000)
 
 ---
 
-## 文件结构
+## Output Results
+
+### 1. Dynamic State Trajectories
+- `Dynamic_states_VTC`: VTC activity over time (20 images × 81 timepoints × 200 × 200)
+- `Dynamic_states_vlPFC`: vlPFC activity over time (20 images × 31 timepoints × 20 × 20)
+
+### 2. Energy Landscape
+- UMAP-reduced network states
+- Energy surface visualization
+- Attractor basin analysis
+
+### 3. Performance Metrics
+- **Decoding Accuracy**: Face vs. tool classification (5 conditions × 20 samples)
+- **Manifold Dimensionality**: Intrinsic dimensionality estimation
+- **Manifold Radius**: Geometric spread of representations
+
+---
+
+## File Structure
 
 ```
 Formal/
-├── BrainSOM.py                    # SOM实现
-├── Hopfield_VTCSOM.py             # 随机Hopfield网络
-├── Stimuli_formal.ipynb           # 刺激准备
-├── Occluded_face_formal.ipynb     # 主仿真
-├── Model_results_formal.ipynb     # 结果可视化
-├── Stim_for_model/                # 输入刺激(每条件20张)
-│   ├── face/                      # 完整面孔
-│   ├── noeye/                     # 遮挡眼睛
-│   ├── top_face/                  # 上半部
-│   ├── down_face/                 # 下半部
-│   └── eyes/                      # 仅眼睛
-├── model_results/                 # 输出目录
-├── *.npy                          # 预训练权重
-├── requirements.txt               # Python依赖
-├── README.md                      # 本文件
-└── LICENSE                        # MIT许可证
+├── BrainSOM.py                    # SOM implementation
+├── Hopfield_VTCSOM.py             # Stochastic Hopfield network
+├── Stimuli_formal.ipynb           # Stimulus preparation
+├── Occluded_face_formal.ipynb     # Main simulation
+├── Model_results_formal.ipynb     # Results visualization
+├── Stim_for_model/                # Input stimuli (20 images per condition)
+│   ├── face/                      # Intact faces
+│   ├── noeye/                     # Eyes-occluded
+│   ├── top_face/                  # Upper-half
+│   ├── down_face/                 # Lower-half
+│   └── eyes/                      # Eyes-only
+├── model_results/                 # Output directory
+├── *.npy                          # Pre-trained weights
+├── requirements.txt               # Python dependencies
+├── README.md                      # This file
+└── LICENSE                        # MIT License
 ```
 
 ---
 
-## 许可证
+## License
 
-本项目采用MIT许可证 - 详见[LICENSE](LICENSE)文件
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details
