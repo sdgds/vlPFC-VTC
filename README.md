@@ -229,6 +229,7 @@ Formal/
 |-- model_dimensions_vlPFC.npy
 |-- model_radii_VTC.npy
 |-- model_radii_vlPFC.npy
+|-- LICENSE
 |-- requirements.txt
 `-- README.md
 ```
