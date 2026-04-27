@@ -121,7 +121,7 @@ No additional download is required for the bundled demo below. This release alre
 
 Due to GitHub file size limits, some large files cannot be uploaded directly to the repository. They are provided here:
 
-`https://cloud.tsinghua.edu.cn/library/c46fb051-ac22-4cbf-a484-de0c3b08c151/Occluded_face/`
+`https://cloud.tsinghua.edu.cn/d/8f10b98a3bcc4e31b12d/`
 
 Please download the required compressed files from that link, extract them, and place the extracted contents into the repository according to the directory structure shown at the end of this `README.md`.
 
