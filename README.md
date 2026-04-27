@@ -115,6 +115,14 @@ No additional download is required for the bundled demo below. This release alre
 - PCA fitting data: `Data.npy`
 - precomputed demo outputs in `model_results/`
 
+### Additional download for large files
+
+Due to GitHub file size limits, some large files cannot be uploaded directly to the repository. They are provided here:
+
+`https://cloud.tsinghua.edu.cn/library/c46fb051-ac22-4cbf-a484-de0c3b08c151/Occluded_face/`
+
+Please download the required compressed files from that link, extract them, and place the extracted contents into the repository according to the directory structure shown at the end of this `README.md`.
+
 ## Demo
 
 The demo and analysis code are contained in the three notebooks below:
