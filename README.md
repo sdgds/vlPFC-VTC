@@ -117,6 +117,8 @@ No additional download is required for the bundled demo below. This release alre
 
 ### Additional download for large files
 
+**Warning:** Due to GitHub file size limits, some large files are not included directly in this repository.
+
 Due to GitHub file size limits, some large files cannot be uploaded directly to the repository. They are provided here:
 
 `https://cloud.tsinghua.edu.cn/library/c46fb051-ac22-4cbf-a484-de0c3b08c151/Occluded_face/`
