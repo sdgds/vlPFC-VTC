@@ -1,237 +1,230 @@
-# Hierarchical Feedback Model for Occluded Face Processing
+# Low-Dimensional Frontal Feedback Resolves High-Dimensional Visual Ambiguity in Human Visual Cortex
 
-A computational model for occluded face recognition based on VTC-vlPFC hierarchical feedback mechanism
+This repository contains the code and bundled data used for the paper *Low-Dimensional Frontal Feedback Resolves High-Dimensional Visual Ambiguity in Human Visual Cortex*. The computational model implements hierarchical interactions between a ventral temporal cortex (VTC) module and a ventrolateral prefrontal cortex (vlPFC) module to study occluded face processing.
 
----
+The release includes:
+
+- model code: `BrainSOM.py`, `Hopfield_VTCSOM.py`
+- stimulus folders for six conditions: intact face, no-eyes, upper-half, lower-half, eyes-only, and tools
+- pretrained model weights and normalization statistics
+- precomputed model outputs in `model_results/`
+- analysis notebooks used to reproduce the main computational figures
+
+The repository is notebook-centered. The main entry points are:
+
+- `Stimuli_formal.ipynb`: stimulus preparation and Grad-CAM based face-information estimation
+- `Occluded_face_formal.ipynb`: hierarchical VTC-vlPFC simulation
+- `Model_results_formal.ipynb`: manifold, decoding, and time-series analysis
 
 ## Overview
 
-This model implements hierarchical feedback interactions between ventral temporal cortex (VTC) and ventrolateral prefrontal cortex (vlPFC) for processing occluded faces. The model combines:
-- **Self-Organizing Maps (SOM)** - Implementing topographic organization
-- **Stochastic Hopfield Networks** - Implementing attractor dynamics
-- **Top-down Feedback** - vlPFC modulation of VTC
+The model follows the paper's computational pipeline:
 
-The model is validated under 5 occlusion conditions: intact faces, eyes-occluded, upper-half, lower-half, and eyes-only.
+1. Each image is resized/cropped to `224 x 224`, processed by AlexNet, and represented in a `1000`-dimensional feature space.
+2. The feature vector is normalized and projected to the first `4` PCA components.
+3. The `4`-dimensional feature drives a `200 x 200` VTC self-organizing map.
+4. VTC activity evolves under stochastic Hopfield dynamics.
+5. In the feedback model, the current VTC state is projected to a `20 x 20` vlPFC SOM, updated by vlPFC recurrent dynamics, and projected back to VTC as top-down feedback.
+6. The code stores VTC and vlPFC state trajectories, which are then analyzed in the paper through decoding, manifold geometry, and energy-landscape visualization.
 
----
+The provided stimuli implement the paper's Information-Graded Occluded Faces (IGOF) design:
 
-## Core Algorithm Pipeline
+- `face`: intact faces
+- `noeye`: eyes occluded
+- `top_face`: upper-half face
+- `down_face`: lower-half face
+- `eyes`: eyes-only
+- `tools`: non-face comparison category
 
-### 1. Input Processing
-```
-Raw Image (224×224)
-  → AlexNet
-  → PCA Dimensionality Reduction (4D)
-  → Normalization
-```
-
-### 2. VTC Self-Organizing Map
-```python
-# VTC SOM (200×200 neurons)
-Input Vector (4D) → SOM Activation → Topographic Response Map (200×200)
-```
-- Using Gaussian neighborhood function
-- Weight normalization
-- Forward activation: activation = dot(weights, input)
-
-### 3. Hopfield Network Dynamics
-
-#### Mode A: Recurrent-only Mode
-```
-VTC Initial State → VTC Recurrent Dynamics → VTC Stable State
-```
-
-#### Mode B: Feedback Mode
-```
-VTC Initial State
-  ↓
-VTC Recurrent Dynamics
-  ↓
-vlPFC Activation (from VTC compressed representation)
-  ↓
-vlPFC Recurrent Dynamics
-  ↓
-vlPFC→VTC Feedback Projection
-  ↓
-VTC Continues Evolution under Feedback Modulation
-  ↓
-VTC Stable State
-```
-
-### 4. Stochastic Update Rule
-```python
-# For each neuron i
-local_field = Σ(w_ij * s_j) + H_external
-```
-- `H_external`: External field (bottom-up input + top-down feedback)
-- Asynchronous update: randomly select one neuron to update at each step
-
-### 5. Energy Function
-```
-E = -0.5 * Σ(w_ij * s_i * s_j)
-```
-- Network tends to minimize energy
-- Stable states correspond to energy minima (attractors)
-
----
+Each folder contains `20` images.
 
 ## System Requirements
 
-- **Python**: 3.8+
-- **Memory**: 16 GB minimum, 32 GB recommended
-- **Storage**: 20 GB
-- **GPU**: Optional (only for AlexNet feature extraction)
+### Hardware
 
----
+The repository is large and memory-intensive.
 
-## Installation
+- CPU: standard 64-bit desktop CPU
+- RAM:
+  - `32 GB` recommended for the precomputed-results demo in `Model_results_formal.ipynb`
+  - `64 GB` recommended for rerunning the full VTC-vlPFC simulation in `Occluded_face_formal.ipynb`
+- Storage:
+  - the current `Formal/` folder occupies about `26.4 GB`
+  - reserve at least `40 GB` free disk space to run the notebooks comfortably
+- GPU: optional; helpful for AlexNet-based feature extraction and Grad-CAM, but not required for the bundled-results demo
 
-### 1. Create Environment
+### Software
+
+The code was checked in the author's conda environment `occluded_face` with:
+
+- OS: Windows 11 24H2, 64-bit (`build 26100`; reported by Python as `Windows-10-10.0.26100-SP0`)
+- Python: `3.9.21`
+
+Primary Python packages used by the notebooks and source code:
+
+- `numpy==1.23.5`
+- `scipy==1.9.3`
+- `pandas==2.2.3`
+- `torch==2.7.1`
+- `torchvision==0.22.1`
+- `scikit-learn==1.6.1`
+- `matplotlib==3.9.4`
+- `seaborn==0.13.2`
+- `Pillow==11.2.1`
+- `opencv-python==4.11.0.86`
+- `imageio==2.37.0`
+- `umap-learn==0.5.7`
+- `statsmodels==0.14.4`
+- `patsy==1.0.1`
+- `tqdm==4.67.1`
+- `h5py==3.13.0`
+- `joblib==1.5.1`
+- `minisom==2.3.5`
+- `dhnn==0.1.12`
+- `ipykernel==6.29.5`
+- `ipywidgets==8.1.7`
+
+Notes:
+
+- `requirements.txt` is included, but the code also requires `minisom` and `dhnn`, which are imported by `BrainSOM.py` and `Hopfield_VTCSOM.py`.
+- If you want to execute the notebooks from the command line, install `notebook` or `jupyter` as well.
+
+## Installation Guide
+
+### Recommended installation
+
 ```bash
-conda create -n occluded_face python=3.8
+conda create -n occluded_face python=3.9.21 -y
 conda activate occluded_face
+python -m pip install -r requirements.txt
+python -m pip install minisom==2.3.5 dhnn==0.1.12 notebook ipywidgets
 ```
 
-### 2. Install Dependencies
-```bash
-pip install -r requirements.txt
-```
+If you need a CUDA-enabled PyTorch build, install PyTorch and torchvision from the official PyTorch channel first, then install the remaining packages.
 
-### 3. Download Pre-trained Weights
-Download the following files and place them in the `Formal/` directory:
-- `som_sigma_6.2.npy` - VTC SOM weights (200×200×4)
-- `model_VTC_weights.npy` - VTC Hopfield weights (40000×40000, ~12GB)
-- `som_vlPFC_weights.npy` - vlPFC SOM weights (20×20×40000)
-- `model_vlPFC_weights.npy` - vlPFC Hopfield weights (400×400)
-- `face_mask.npy` - Face-selective region mask
-- `object_mask.npy` - Object-selective region mask
-- `Data.npy` - AlexNet feature data
-- `mean.npy`, `std.npy` - Normalization parameters
+### Typical install time
 
-**⚠️ Important:** Extract the contents from the https://cloud.tsinghua.edu.cn/d/8f10b98a3bcc4e31b12d/ and place them in the directory according to the File Structure format (see below) before running the code.
+Typical install time on an ordinary desktop computer with a stable internet connection: `~20-30 minutes`.
 
----
+### Files already included in this release
 
-## Usage
+No additional download is required for the bundled demo below. This release already contains:
 
-### Quick Start
+- pretrained weights such as `model_VTC_weights.npy`, `model_vlPFC_weights.npy`, `som_sigma_6.2.npy`, `som_vlPFC_weights.npy`
+- normalization statistics: `mean.npy`, `std.npy`
+- PCA fitting data: `Data.npy`
+- precomputed demo outputs in `model_results/`
 
-#### 1. Load Models
+## Demo
+
+The demo and analysis code are contained in the three notebooks below:
+
+- `Stimuli_formal.ipynb`
+- `Occluded_face_formal.ipynb`
+- `Model_results_formal.ipynb`
+
+The expected outputs are shown directly in the corresponding notebook cells.
+
+### Expected demo run time
+
+Expected run time on an ordinary desktop computer with `32 GB` RAM and an SSD: `~10-20 minutes`.
+
+Most of this time is spent loading the bundled `model_results/` files, which occupy about `13 GB` in total.
+
+## Instructions for Use
+
+### Using the provided stimuli
+
+`Occluded_face_formal.ipynb` is the main notebook for running the model on image folders. The notebook:
+
+1. loads AlexNet
+2. fits PCA on `Data.npy`
+3. loads the pretrained SOM and Hopfield weights
+4. converts each image into a `4`-dimensional PCA feature
+5. runs the VTC-only or VTC-vlPFC stochastic dynamics
+6. saves the outputs as Python dictionaries containing dynamic states and feedback terms
+
+The notebook currently points to:
+
+- input root: `Stim_for_model/`
+- default output root: `VTC_vlPFC_model/`
+
+If you want the saved files to be read directly by `Model_results_formal.ipynb`, save them with the same naming convention used in `model_results/`, for example:
+
+- `Face_feedback_results.npy`
+- `Top_face_feedback_results.npy`
+- `Noeye_feedback_results.npy`
+- `Down_face_feedback_results.npy`
+- `Eyes_feedback_results.npy`
+- `Tool_feedback_results.npy`
+
+### Using your own data
+
+To run the model on your own images:
+
+1. Create a new folder under `Stim_for_model/`, for example `Stim_for_model/my_condition/`.
+2. Put your `.png`, `.jpg`, or `.bmp` images into that folder.
+3. Open `Occluded_face_formal.ipynb`.
+4. Keep the same preprocessing used by the paper:
+   - resize to `256`
+   - center crop to `224 x 224`
+   - normalize with ImageNet mean/std inside the notebook
+   - extract AlexNet features
+   - z-score/normalize with the bundled `mean.npy` and `std.npy`
+   - project to the first four PCA components fitted from `Data.npy`
+5. Replace the input path in the notebook, or call the helper already used there:
+
 ```python
-import numpy as np
-import BrainSOM
-import Hopfield_VTCSOM
-
-# Load VTC SOM
-som_VTC = BrainSOM.VTCSOM(200, 200, 4, sigma=6.2, learning_rate=1)
-som_VTC._weights = np.load('som_sigma_6.2.npy')
-
-# Load VTC Hopfield Network
-model_VTC = Hopfield_VTCSOM.Stochastic_Hopfield_nn(
-    x=200, y=200, pflag=1, nflag=-1,
-    patterns=[None, None, None, None]
+images_response, Dynamic_states_VTC, Dynamic_states_vlPFC, F_all, H_top_down_all = Feedback_results(
+    'Stim_for_model/my_condition/', mean, std
 )
-model_VTC._w = np.load('model_VTC_weights.npy')
-
-# Load vlPFC Models (required for feedback mode)
-som_vlPFC = BrainSOM.VTCSOM(20, 20, 40000, sigma=6, learning_rate=1)
-som_vlPFC._weights = np.load('som_vlPFC_weights.npy')
-
-model_vlPFC = Hopfield_VTCSOM.Stochastic_Hopfield_nn(
-    x=20, y=20, pflag=1, nflag=-1,
-    patterns=[None, None, None, None]
-)
-model_vlPFC._w = np.load('model_vlPFC_weights.npy')
 ```
 
-#### 2. Run Feedback Mode
-See complete implementation in `Occluded_face_formal.ipynb`.
+6. Save the output dictionary with `pickle.dump(...)` using the same keys as the bundled files:
+   - `Dynamic_states_VTC`
+   - `Dynamic_states_vlPFC`
+   - `F`
+   - `H_top_down`
 
-### Main Notebook Files
+## Repository Contents
 
-1. **Stimuli_formal.ipynb** - Stimulus Preparation
-   - AlexNet feature extraction
-   - GradCAM attention analysis
-   - Feature normalization
-
-2. **Occluded_face_formal.ipynb** - Model Simulation
-   - VTC-vlPFC hierarchical dynamics
-   - Simulation of 5 occlusion conditions
-   - Results saved to `model_results/`
-
-3. **Model_results_formal.ipynb** - Results Analysis
-   - Temporal dynamics visualization
-   - Energy landscape analysis (UMAP)
-   - Decoding analysis
-   - Manifold geometry metrics
-
----
-
-## Key Parameters
-
-### SOM Parameters
-- `sigma`: Neighborhood width
-- `learning_rate`: Learning rate (typically 1.0)
-- `neighborhood_function`: Neighborhood function type ('gaussian')
-
-### Hopfield Parameters
-- `beta`: Inverse temperature, controls stochasticity
-  - High values (100-200): More deterministic, fast convergence
-  - Low values (10-50): More stochastic, explores more states
-- `epochs`: Number of update steps
-  - Recurrent-only: 80,000 steps
-  - Feedback: 80,000 steps (vlPFC starts at 50,000)
-- `save_inter_step`: Save interval (1000 steps)
-
-### Feedback Parameters
-- `top_down_strength`: Feedback strength (default: 4)
-- `vlPFC_start_time`: vlPFC start time (default: 50,000)
-
----
-
-## Output Results
-
-### 1. Dynamic State Trajectories
-- `Dynamic_states_VTC`: VTC activity over time (20 images × 81 timepoints × 200 × 200)
-- `Dynamic_states_vlPFC`: vlPFC activity over time (20 images × 31 timepoints × 20 × 20)
-
-### 2. Energy Landscape
-- UMAP-reduced network states
-- Energy surface visualization
-- Attractor basin analysis
-
-### 3. Performance Metrics
-- **Decoding Accuracy**: Face vs. tool classification (5 conditions × 20 samples)
-- **Manifold Dimensionality**: Intrinsic dimensionality estimation
-- **Manifold Radius**: Geometric spread of representations
-
----
-
-## File Structure
-
-```
+```text
 Formal/
-├── BrainSOM.py                    # SOM implementation
-├── Hopfield_VTCSOM.py             # Stochastic Hopfield network
-├── Stimuli_formal.ipynb           # Stimulus preparation
-├── Occluded_face_formal.ipynb     # Main simulation
-├── Model_results_formal.ipynb     # Results visualization
-├── Stim_for_model/                # Input stimuli (20 images per condition)
-│   ├── face/                      # Intact faces
-│   ├── noeye/                     # Eyes-occluded
-│   ├── top_face/                  # Upper-half
-│   ├── down_face/                 # Lower-half
-│   └── eyes/                      # Eyes-only
-├── model_results/                 # Output directory
-├── *.npy                          # Pre-trained weights
-├── requirements.txt               # Python dependencies
-├── README.md                      # This file
-└── LICENSE                        # MIT License
+|-- BrainSOM.py
+|-- Hopfield_VTCSOM.py
+|-- Stimuli_formal.ipynb
+|-- Occluded_face_formal.ipynb
+|-- Model_results_formal.ipynb
+|-- Stim_for_model/
+|   |-- face/
+|   |-- noeye/
+|   |-- top_face/
+|   |-- down_face/
+|   |-- eyes/
+|   `-- tools/
+|-- model_results/
+|-- Data.npy
+|-- mean.npy
+|-- std.npy
+|-- face_mask.npy
+|-- object_mask.npy
+|-- som_sigma_6.2.npy
+|-- som_vlPFC_weights.npy
+|-- model_VTC_weights.npy
+|-- model_vlPFC_weights.npy
+|-- X_VTC.npy
+|-- X_vlPFC.npy
+|-- H_VTC_recurrent.npy
+|-- H_VTC_feedback.npy
+|-- H_vlPFC_feedback.npy
+|-- model_dimensions_VTC.npy
+|-- model_dimensions_vlPFC.npy
+|-- model_radii_VTC.npy
+|-- model_radii_vlPFC.npy
+|-- requirements.txt
+`-- README.md
 ```
-
----
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details
-
+This project is released under the MIT License. See `LICENSE`.
